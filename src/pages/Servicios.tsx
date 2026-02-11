@@ -37,7 +37,14 @@ const Servicios = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const lenis = new Lenis({smooth:true})
+    // 1. Inicialización de Lenis (sin la propiedad 'smooth')
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+
+    // 2. Sincronizar Lenis con ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
 
     const raf = (time: number) => {
       lenis.raf(time);
@@ -45,28 +52,35 @@ const Servicios = () => {
     };
     requestAnimationFrame(raf);
 
+    // 3. Animación de Scroll Horizontal
     const slides = gsap.utils.toArray('.service-slide');
 
-    gsap.to(slides, {
-      xPercent: -100 * (slides.length - 1),
-      ease: 'none',
-      scrollTrigger: {
-        trigger: scrollRef.current,
-        pin: true,
-        scrub: 1,
-        end: () => `+=${scrollRef.current?.offsetWidth || 0}`,
-      },
-    });
+    const ctx = gsap.context(() => {
+      gsap.to(slides, {
+        xPercent: -100 * (slides.length - 1),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: scrollRef.current,
+          pin: true,
+          scrub: 1,
+          // El final depende del ancho total del scroll
+          end: () => `+=${scrollRef.current?.scrollWidth}`,
+          invalidateOnRefresh: true,
+        },
+      });
+    }, scrollRef);
 
+    // 4. Limpieza (Cleanup)
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
       lenis.destroy();
+      ctx.revert(); // Esto limpia todas las animaciones de GSAP dentro del contexto
     };
   }, []);
 
   return (
     <TransitionLayout>
       <section className="bg-white overflow-hidden">
+        {/* Cabecera de la sección */}
         <div className="pt-28 sm:pt-32 pb-14 text-center px-4 sm:px-8">
           <h2 className="text-3xl sm:text-5xl font-bold text-neutral-900">
             Áreas de <span className="text-indigo-600">Servicio</span>
@@ -76,7 +90,8 @@ const Servicios = () => {
           </p>
         </div>
 
-        <div ref={scrollRef} className="flex w-fit min-h-screen">
+        {/* Contenedor de Slides horizontales */}
+        <div ref={scrollRef} className="flex w-fit min-h-screen items-center bg-white">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
@@ -84,13 +99,13 @@ const Servicios = () => {
                 key={index}
                 className="service-slide w-screen flex-shrink-0 flex flex-col justify-center items-center px-6 sm:px-10 text-center"
               >
-                <div className="text-indigo-600 text-4xl sm:text-5xl mb-5">
+                <div className="text-indigo-600 text-5xl sm:text-6xl mb-6 transition-transform duration-300 hover:scale-110">
                   <Icon />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-semibold text-neutral-800 mb-2">
+                <h3 className="text-2xl sm:text-3xl font-semibold text-neutral-800 mb-4">
                   {service.title}
                 </h3>
-                <p className="text-neutral-600 max-w-sm text-sm sm:text-base px-2">
+                <p className="text-neutral-600 max-w-md text-base sm:text-lg leading-relaxed">
                   {service.description}
                 </p>
               </div>

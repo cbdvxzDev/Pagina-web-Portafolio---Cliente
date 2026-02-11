@@ -16,7 +16,7 @@ interface FormData {
 const FORMSPREE_FORM_ID = "tu_id_de_formspree"; // Ejemplo: "xwkgpzje"
 
 const Contact = () => {
-  const [state, handleSubmitFormspree] = useForm(FORMSPREE_FORM_ID);
+  const [state] = useForm(FORMSPREE_FORM_ID);
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -43,10 +43,10 @@ const Contact = () => {
     }
   }, [state.succeeded]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    handleSubmitFormspree(e);
-  };
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+  }
+  
 
   return (
     <TransitionLayout>
